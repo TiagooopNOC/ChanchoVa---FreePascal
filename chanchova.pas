@@ -14,6 +14,8 @@ TMano = array[1..4] of TCarta;
 TMazo = array [1..16] of TCarta;
 
 var
+cont: array [1..4] of integer; //Contador para saber cuantos 1 tiene, cuantos 2 tiene ... ( Ej: Espacio 1 para saber cuantos 1 tiene)
+
 i:integer;
 p:integer;
 
@@ -74,6 +76,55 @@ begin
       p4[i]:=Mazo[indice];
       indice:=indice+1;
     end;
+end;
+
+procedure ContarNumeros(var mano:TMano; cnt:cont);
+i:integer;
+begin
+  for i:=1 to 4 do  
+  {Inicializamos todo en 0}
+  cnt[i]:=0;
+  for i:=1 to 4 do
+  {A cada vez que aparezca un numero i en el cont[i] sumamos 1, asi sabemos cuanto le falta para tener los 4 num iguales:}
+  cnt[mano[i].numero]:=cnt[mano[i].numero]+1;
+end;
+
+function HayCuatroiIguales(mano:TMano):boolean;
+var cnt:cont;
+i:integer;
+hay:boolean;
+
+begin
+  hay:=false;
+  ContarNumeros(mano,cnt);
+  for i:= 1 to 4 do
+  if cnt[i] = 4 then
+    hay:=true;
+
+  HayCuatroiIguales:=hay;
+end;
+
+function ElegirCartaADar (mano:TMano):integer;
+{Quiero buscar el indice de la mejor carta para dar (es decir la menos util asi la doy al rival.)}
+var
+cnt:cont;
+i,mejorindice,mejorfrecuencia:integer;
+
+begin
+  ContarNumeros(mano,cont);
+  mejorindice:=1; {Arrancamos suponiendo que la carta 1 es la peor}
+  mejorfrecuencia:=cnt[mano[1].numero]; {Frecuencia de esa carta}
+
+  for i:=2 to 4 do {For para comparar las demas cartas con la primera.}
+  begin
+    if cnt[mano[i].numero] < mejorfrecuencia then {Si las veces que tenemos esa carta es menor a mejorfrecuencia}
+    begin
+    // Entonces nuestra mejorfrecuencia y mejorindice para dar la carta es esa nueva aparicion
+      mejorfrecuencia:=cnt[mano[i].numero];  
+      mejorindice:=i;
+    end;
+  end;
+  ElegirCartaADar:=mejorindice;
 end;
 
 begin
