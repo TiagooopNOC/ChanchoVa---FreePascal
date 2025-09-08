@@ -124,27 +124,6 @@ begin
   ElegirCartaADar:=mejorindice;
 end;
 
-procedure PasarCartaALaDerecha (var p1,p2,p3,p4:TMano);
-var
-indice1,indice2,indice3,indice4:integer;
-carta1,carta2,carta3,carta4:TCarta;
-
-begin
-  indice1:=ElegirCartaADar(p1);
-  indice2:=ElegirCartaADar(p2);
-  indice3:=ElegirCartaADar(p3);
-  indice4:=ElegirCartaADar(p4);
-
-  carta1:=p1[indice1];
-  carta2:=p2[indice2];
-  carta3:=p3[indice3];
-  carta4:=p4[indice4];
-
-  p2[indice2]:=carta1; {Jugador 2 recibe la carta de jugador 1}
-  p3[indice3]:=carta2; {Jugador 3 recibe la carta de jugador 2}
-  p4[indice4]:=carta3; {Jugador 4 recibe la carta de jugador 3}
-  p1[indice1]:=carta4; {Jugador 1 recibe la carta de jugador 4}
-end;
 
 procedure MostrarMano(titulo:string; mano:TMano);
 const
@@ -158,54 +137,120 @@ begin
   writeln(' ', mano[i].numero, ' de ',NombrePalos[mano[i].palo]);
 end;
 
+
+function ElegirCartaIA(var mano: TMano): integer;
+var
+  cnt: TCont;
+  i, minFreq, candCount, k: integer;
+  cands: array[1..4] of integer;
 begin
-    randomize;
-    LlenarMazo(MazoJuego);
-    Barajar(MazoJuego);
-    Repartir(MazoJuego,CartasP1,CartasP2,CartasP3,CartasP4);
+  ContarNumeros(mano, cnt);
 
-    ronda:=0;
-    ganador:=0;
+  minFreq := cnt[ mano[1].numero ];
+  for i := 2 to 4 do
+    if cnt[ mano[i].numero ] < minFreq then
+      minFreq := cnt[ mano[i].numero ];
 
-    repeat
-      inc(ronda); {Para incrementar +1}
+  candCount := 0;
+  for i := 1 to 4 do
+    if cnt[ mano[i].numero ] = minFreq then
+    begin
+      inc(candCount);
+      cands[candCount] := i;
+    end;
 
-      {Chequear victoria antes de pasar cartas por si alguno empezó ganando.}
-      if HayCuatroIguales(CartasP1) then 
-      ganador:=1
-      else if HayCuatroIguales(CartasP2) then
-      ganador:=2
-      else if HayCuatroIguales(CartasP3) then
-      ganador:=3
-      else if HayCuatroIguales(CartasP4) then
-      ganador:=4;
+  k := random(candCount) + 1;        { 1..candCount }
+  ElegirCartaIA := cands[k];
+end;
 
-      if ganador = 0 then
-      begin  
-        PasarCartaALaDerecha(CartasP1,CartasP2,CartasP3,Cartasp4);
-        {Chequeo de victoria nuevamente}
-        if HayCuatroIguales(CartasP1) then 
-        ganador:=1
-        else if HayCuatroIguales(CartasP2) then
-        ganador:=2
-        else if HayCuatroIguales(CartasP3) then
-        ganador:=3
-        else if HayCuatroIguales(CartasP4) then
-        ganador:=4;
-        writeln('    --- RONDA ',ronda,'---');
-        writeln;
-        MostrarMano('Mano Jugador 1', CartasP1);
-        writeln;
-        MostrarMano('Mano Jugador 2', CartasP2);
-        writeln;
+function ElegirCartaHumano(const mano: TMano): integer;
+var
+  idx: integer; ok: boolean;
+begin
+  writeln;
+  MostrarMano('Tu mano', mano);
+  repeat
+    write('Elija el indice (1..4) de la carta que quiere pasar: ');
+    readln(idx);
+    ok := (idx >= 1) and (idx <= 4);
+    if not ok then writeln('indice invalido, proba de nuevo.');
+  until ok;
+  ElegirCartaHumano := idx;
+end;
+
+procedure PasarCartaALaDerecha(var p1, p2, p3, p4: TMano);
+var
+  i1, i2, i3, i4: integer;
+  c1, c2, c3, c4: TCarta;
+begin
+  { Humano }
+  i1 := ElegirCartaHumano(p1);
+  { IAs }
+  i2 := ElegirCartaIA(p2);
+  i3 := ElegirCartaIA(p3);
+  i4 := ElegirCartaIA(p4);
+
+  c1 := p1[i1];  c2 := p2[i2];  c3 := p3[i3];  c4 := p4[i4];
+
+  p2[i2] := c1;  p3[i3] := c2;  p4[i4] := c3;  p1[i1] := c4;
+
+end;
+
+begin
+  randomize;
+  LlenarMazo(MazoJuego);
+  Barajar(MazoJuego);
+  Repartir(MazoJuego, CartasP1, CartasP2, CartasP3, CartasP4);
+
+  ronda := 0; ganador := 0;
+
+  repeat
+    inc(ronda);
+
+    if      HayCuatroIguales(CartasP1) then ganador := 1
+    else if HayCuatroIguales(CartasP2) then ganador := 2
+    else if HayCuatroIguales(CartasP3) then ganador := 3
+    else if HayCuatroIguales(CartasP4) then ganador := 4;
+
+    if ganador = 0 then
+    begin
+      writeln; writeln('=== RONDA ', ronda, ' ===');
+      PasarCartaALaDerecha(CartasP1, CartasP2, CartasP3, CartasP4);
+
+      if      HayCuatroIguales(CartasP1) then 
+      ganador := 1
+      else if HayCuatroIguales(CartasP2) then 
+      ganador := 2
+      else if HayCuatroIguales(CartasP3) then 
+      ganador := 3
+      else if HayCuatroIguales(CartasP4) then 
+      ganador := 4;
+
+      writeln;
+      MostrarMano('Tu mano (después de pasar/recibir)', CartasP1);
+      { si alguien desea ver las manos de las ias descomente lo siguiente: }
+      { MostrarMano('Mano Jugador 2', CartasP2);
         MostrarMano('Mano Jugador 3', CartasP3);
-        writeln;
-        MostrarMano('Mano Jugador 4', CartasP4);
-        writeln;
-      end;
-    until ganador <> 0;
-    writeln;
-    writeln('Ganador: Jugador ',ganador,' en la ronda ', ronda,'!');
+        MostrarMano('Mano Jugador 4', CartasP4); }
+    end;
+  until ganador <> 0;
 
-  {Falta aplicar movimiento de juego del chancho va e interactividad con whiles y centinelas.}
+  writeln;
+  if ganador = 1 then
+    writeln('CHANCHO! Ganaste en la ronda ', ronda, ' ')
+  else if ganador = 2 then
+    begin
+    writeln('El Jugador ', ganador, ' grito Chancho, es el ganador en la ronda ', ronda, '.');
+    MostrarMano('Mano Jugador 2', CartasP2);
+    end
+  else if ganador = 3 then
+    begin
+    writeln('El Jugador ', ganador, ' grito Chancho, es el ganador en la ronda ', ronda, '.');
+    MostrarMano('Mano Jugador 3', CartasP3);
+    end
+  else if ganador = 4 then
+    begin
+    writeln('El Jugador ', ganador, ' grito Chancho, es el ganador en la ronda ', ronda, '.');
+    MostrarMano('Mano Jugador 4', CartasP4);
+    end;    
 end.
