@@ -69,9 +69,7 @@ Al ejecutar:
 Ganador: Jugador 3 en la ronda 27!
 ```
 ## 🗺️ Roadmap
-- Interactividad: 1 humano + 3 IAs (pedir índice 1..4 con readln y validar).
-- IA con desempate aleatorio y/o heurísticas alternativas.
- - Detector de ciclos y regla de anti-estancamiento.
+ - Modo Coop ¿?
  - Versión gráfica con Lazarus/GUI.
  - Tests simples de barajado y reparto.
 
